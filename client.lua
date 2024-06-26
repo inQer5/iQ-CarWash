@@ -7,6 +7,11 @@ local carWashBlip = {
 
 local isInRange = false
 
+local function isCarWashOpen()
+    local hour = GetClockHours()
+    return (hour >= 12 and hour < 18)
+end
+
 Citizen.CreateThread(function()
     carWashBlip.blip = AddBlipForCoord(carWashBlip.pos)
     SetBlipSprite(carWashBlip.blip, 100)
@@ -22,7 +27,7 @@ end)
 local function openCarWashMenu()
     exports.ox_lib:registerContext({
         id = 'car_wash_menu',
-        title = 'Automyčka',
+        title = 'Automycka',
         options = {
             {
                 title = 'Standardní',
@@ -116,19 +121,29 @@ Citizen.CreateThread(function()
                 playerCoords = GetEntityCoords(playerPed)
                 distance = #(playerCoords - carWashBlip.pos)
                 
-                DrawMarker(1, carWashBlip.pos.x, carWashBlip.pos.y, carWashBlip.pos.z - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 1.5, 0.5, 0, 255, 0, 100, false, true, 2, nil, nil, false)
 
                 if distance < 2.5 then
-                    exports.ox_lib:showTextUI('Otevřít menu automyčky', {
-                        position = "right-center",
-                        icon = 'hand',
-                        style = {
-                            borderRadius = 5,
-                            color = 'white'
-                        }
-                    })
-                    if IsControlJustReleased(0, 38) then
-                        openCarWashMenu()
+                    if isCarWashOpen() then
+                        exports.ox_lib:showTextUI('Otevřít menu automyčky', {
+                            position = "right-center",
+                            icon = 'hand',
+                            style = {
+                                borderRadius = 5,
+                                color = 'white'
+                            }
+                        })
+                        if IsControlJustReleased(0, 38) then
+                            openCarWashMenu()
+                        end
+                    else
+                        exports.ox_lib:showTextUI('Otevřeno je od 12:00 do 18:00', {
+                            position = "right-center",
+                            icon = 'lock',
+                            style = {
+                                borderRadius = 5,
+                                color = 'red'
+                            }
+                        })
                     end
                 else
                     exports.ox_lib:hideTextUI()
