@@ -135,7 +135,7 @@ Citizen.CreateThread(function()
                 distance = #(playerCoords - carWashBlip.pos)
                 
 
-                if distance < 2.5 then
+                if distance < 4.0 then
                     if isCarWashOpen() then
                         exports.ox_lib:showTextUI('Otevřít menu automyčky', {
                             position = "right-center",
