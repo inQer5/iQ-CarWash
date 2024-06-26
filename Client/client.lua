@@ -9,7 +9,7 @@ local isInRange = false
 
 local function isCarWashOpen()
     local hour = GetClockHours()
-    return (hour >= 12 and hour < 18)
+    return (hour >= 0 and hour < 23)
 end
 
 Citizen.CreateThread(function()
@@ -20,7 +20,7 @@ Citizen.CreateThread(function()
     SetBlipColour(carWashBlip.blip, 3)
     SetBlipAsShortRange(carWashBlip.blip, true)
     BeginTextCommandSetBlipName("STRING")
-    AddTextComponentString("Automyčka")
+    AddTextComponentString("Automycka")
     EndTextCommandSetBlipName(carWashBlip.blip)
 end)
 
@@ -94,7 +94,20 @@ AddEventHandler('carwash:startWashing', function(data)
             Citizen.Wait(400)
 
             TaskStartScenarioInPlace(npc, 'WORLD_HUMAN_MAID_CLEAN', 0, true)
-            Citizen.Wait(15000)  -- Délka mytí
+
+            -- Zobrazení kruhového ukazatele postupu
+            exports.ox_lib:progressCircle({
+                duration = 15000,
+                position = 'bottom',
+                label = 'Probíhá mytí vozidla...',
+                useWhileDead = false,
+                canCancel = false,
+                disable = {
+                    car = true,
+                }
+            })
+
+            Citizen.Wait(500)  -- Délka mytí
 
             exports.ox_lib:notify({title = 'Úspěch', description = 'Vaše vozidlo bylo umyto.', type = 'success'})
             DeletePed(npc)
