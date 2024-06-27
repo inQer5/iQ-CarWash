@@ -1,4 +1,25 @@
 local ESX = exports['es_extended']:getSharedObject()
+local Config = Config or {}
+
+-- Načítání lokalizace
+local function loadLocale(locale)
+    local localeFile = ('Locales/%s.lua'):format(locale)
+    if not LoadResourceFile(GetCurrentResourceName(), localeFile) then
+        print(('Locale file for "%s" does not exist. Falling back to default "en".'):format(locale))
+        locale = 'en'
+        localeFile = 'Locales/en.lua'
+    end
+    local locales = LoadResourceFile(GetCurrentResourceName(), localeFile)
+    assert(load(locales))()
+end
+
+-- Funkce pro načtení lokalizačních textů
+local function _U(entry)
+    return Locales[entry] or entry
+end
+
+-- Načíst lokalizaci při startu
+loadLocale(Config.Locale)
 
 local carWashBlip = {
     pos = vector3(176.13, -1736.74, 28.70),
@@ -20,25 +41,25 @@ Citizen.CreateThread(function()
     SetBlipColour(carWashBlip.blip, 3)
     SetBlipAsShortRange(carWashBlip.blip, true)
     BeginTextCommandSetBlipName("STRING")
-    AddTextComponentString("Automycka")
+    AddTextComponentString(_U('car_wash'))
     EndTextCommandSetBlipName(carWashBlip.blip)
 end)
 
 local function openCarWashMenu()
     exports.ox_lib:registerContext({
         id = 'car_wash_menu',
-        title = 'Automycka',
+        title = _U('car_wash'),
         options = {
             {
-                title = 'Standardní',
-                description = 'Cena: 500$',
+                title = _U('standard'),
+                description = _U('price') .. '500',
                 icon = 'fa-solid fa-angle-right',
                 event = 'carwash:startWashing',
                 args = { type = 'standard', price = 500 }
             },
             {
-                title = 'Luxusní',
-                description = 'Cena: 1000$',
+                title = _U('luxury'),
+                description = _U('price') .. '1000',
                 icon = 'fa-solid fa-angle-right',
                 event = 'carwash:startWashing',
                 args = { type = 'luxury', price = 1000 }
@@ -54,11 +75,11 @@ AddEventHandler('carwash:startWashing', function(data)
     local vehicle = GetVehiclePedIsIn(playerPed, false)
 
     if vehicle == 0 then
-        exports.ox_lib:notify({title = 'Chyba', description = 'Musíte být ve vozidle.', type = 'error'})
+        exports.ox_lib:notify({title = _U('error'), description = _U('error_vehicle'), type = 'error'})
         return
     end
 
-    FreezeEntityPosition(vehicle, true)  -- Zamrznutí vozidla
+    FreezeEntityPosition(vehicle, true)
 
     ESX.TriggerServerCallback('carwash:pay', function(success)
         if success then
@@ -95,11 +116,10 @@ AddEventHandler('carwash:startWashing', function(data)
 
             TaskStartScenarioInPlace(npc, 'WORLD_HUMAN_MAID_CLEAN', 0, true)
 
-            -- Zobrazení kruhového ukazatele postupu
             exports.ox_lib:progressCircle({
                 duration = 15000,
                 position = 'bottom',
-                label = 'Probíhá mytí vozidla...',
+                label = _U('washing'),
                 useWhileDead = false,
                 canCancel = false,
                 disable = {
@@ -107,16 +127,16 @@ AddEventHandler('carwash:startWashing', function(data)
                 }
             })
 
-            Citizen.Wait(500)  -- Délka mytí
+            Citizen.Wait(500)
 
-            exports.ox_lib:notify({title = 'Úspěch', description = 'Vaše vozidlo bylo umyto.', type = 'success'})
+            exports.ox_lib:notify({title = _U('success'), description = _U('success_wash'), type = 'success'})
             DeletePed(npc)
             SetVehicleDirtLevel(vehicle, 0.0)
         else
-            exports.ox_lib:notify({title = 'Chyba', description = 'Nemáte dostatek peněz.', type = 'error'})
+            exports.ox_lib:notify({title = _U('error'), description = _U('error_money'), type = 'error'})
         end
 
-        FreezeEntityPosition(vehicle, false)  -- Odblokování vozidla
+        FreezeEntityPosition(vehicle, false)
     end, data.price)
 end)
 
@@ -133,11 +153,10 @@ Citizen.CreateThread(function()
                 Citizen.Wait(5)
                 playerCoords = GetEntityCoords(playerPed)
                 distance = #(playerCoords - carWashBlip.pos)
-                
 
                 if distance < 4.0 then
                     if isCarWashOpen() then
-                        exports.ox_lib:showTextUI('Otevřít menu automyčky', {
+                        exports.ox_lib:showTextUI(_U('open_menu'), {
                             position = "right-center",
                             icon = 'hand',
                             style = {
@@ -149,7 +168,7 @@ Citizen.CreateThread(function()
                             openCarWashMenu()
                         end
                     else
-                        exports.ox_lib:showTextUI('Otevřeno je od 12:00 do 18:00', {
+                        exports.ox_lib:showTextUI(_U('closed'), {
                             position = "right-center",
                             icon = 'lock',
                             style = {
