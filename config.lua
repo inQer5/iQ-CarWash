@@ -16,3 +16,11 @@ Config.Locations = {
     {x = 176.13, y = -1736.74, z = 28.70},
     {x = 144.34, y = 6642.69, z = 30.96}
 }
+
+Config.Blips = {
+    sprite = 100,
+    display = 4,
+    scale = 0.8,
+    colour = 3,
+    shortRange = true
+}
