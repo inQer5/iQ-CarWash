@@ -52,17 +52,17 @@ local function openCarWashMenu()
         options = {
             {
                 title = _U('standard'),
-                description = _U('price') .. '500',
+                description = _U('price') .. Config.Prices.standard,
                 icon = 'fa-solid fa-angle-right',
                 event = 'carwash:startWashing',
-                args = { type = 'standard', price = 500 }
+                args = { type = 'standard', price = Config.Prices.standard }
             },
             {
                 title = _U('luxury'),
-                description = _U('price') .. '1000',
+                description = _U('price') .. Config.Prices.luxury,
                 icon = 'fa-solid fa-angle-right',
                 event = 'carwash:startWashing',
-                args = { type = 'luxury', price = 1000 }
+                args = { type = 'luxury', price = Config.Prices.luxury }
             }
         }
     })
