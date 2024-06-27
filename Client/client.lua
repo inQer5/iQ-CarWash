@@ -14,59 +14,65 @@ local function loadLocale(locale)
 end
 
 -- Funkce pro načtení lokalizačních textů
-local function _U(entry)
-    return Locales[entry] or entry
+local function _U(entry, ...)
+    if Locales[entry] then
+        return string.format(Locales[entry], ...)
+    else
+        return entry
+    end
 end
 
 -- Načíst lokalizaci při startu
 loadLocale(Config.Locale)
 
-local carWashBlip = {
-    pos = vector3(176.13, -1736.74, 28.70),
-    blip = nil
-}
-
+local carWashBlips = {}
 local isInRange = false
+local currentCarWash = nil
 
 local function isCarWashOpen()
     local hour = GetClockHours()
-    return (hour >= 0 and hour < 23)
+    return (hour >= Config.OpenHours.open and hour < Config.OpenHours.close)
 end
 
-Citizen.CreateThread(function()
-    carWashBlip.blip = AddBlipForCoord(carWashBlip.pos)
-    SetBlipSprite(carWashBlip.blip, 100)
-    SetBlipDisplay(carWashBlip.blip, 4)
-    SetBlipScale(carWashBlip.blip, 0.8)
-    SetBlipColour(carWashBlip.blip, 3)
-    SetBlipAsShortRange(carWashBlip.blip, true)
-    BeginTextCommandSetBlipName("STRING")
-    AddTextComponentString(_U('car_wash'))
-    EndTextCommandSetBlipName(carWashBlip.blip)
-end)
+local function createCarWashBlips()
+    for i, loc in ipairs(Config.Locations) do
+        local blip = AddBlipForCoord(loc.x, loc.y, loc.z)
+        SetBlipSprite(blip, 100)
+        SetBlipDisplay(blip, 4)
+        SetBlipScale(blip, 0.8)
+        SetBlipColour(blip, 3)
+        SetBlipAsShortRange(blip, true)
+        BeginTextCommandSetBlipName("STRING")
+        AddTextComponentString(_U('car_wash'))
+        EndTextCommandSetBlipName(blip)
+        table.insert(carWashBlips, {blip = blip, pos = vector3(loc.x, loc.y, loc.z)})
+    end
+end
 
 local function openCarWashMenu()
-    exports.ox_lib:registerContext({
-        id = 'car_wash_menu',
-        title = _U('car_wash'),
-        options = {
-            {
-                title = _U('standard'),
-                description = _U('price') .. Config.Prices.standard,
-                icon = 'fa-solid fa-angle-right',
-                event = 'carwash:startWashing',
-                args = { type = 'standard', price = Config.Prices.standard }
-            },
-            {
-                title = _U('luxury'),
-                description = _U('price') .. Config.Prices.luxury,
-                icon = 'fa-solid fa-angle-right',
-                event = 'carwash:startWashing',
-                args = { type = 'luxury', price = Config.Prices.luxury }
+    if currentCarWash then
+        exports.ox_lib:registerContext({
+            id = 'car_wash_menu',
+            title = _U('car_wash'),
+            options = {
+                {
+                    title = _U('standard'),
+                    description = _U('price') .. Config.Prices.standard,
+                    icon = 'fa-solid fa-angle-right',
+                    event = 'carwash:startWashing',
+                    args = { type = 'standard', price = Config.Prices.standard }
+                },
+                {
+                    title = _U('luxury'),
+                    description = _U('price') .. Config.Prices.luxury,
+                    icon = 'fa-solid fa-angle-right',
+                    event = 'carwash:startWashing',
+                    args = { type = 'luxury', price = Config.Prices.luxury }
+                }
             }
-        }
-    })
-    exports.ox_lib:showContext('car_wash_menu')
+        })
+        exports.ox_lib:showContext('car_wash_menu')
+    end
 end
 
 RegisterNetEvent('carwash:startWashing')
@@ -141,20 +147,21 @@ AddEventHandler('carwash:startWashing', function(data)
 end)
 
 Citizen.CreateThread(function()
+    createCarWashBlips()
+
     while true do
-        Citizen.Wait(500)
+        Citizen.Wait(5)
         local playerPed = PlayerPedId()
         local playerCoords = GetEntityCoords(playerPed)
-        local distance = #(playerCoords - carWashBlip.pos)
+        local isInRangeAny = false
 
-        if distance < 10.0 and not isInRange then
-            isInRange = true
-            while distance < 10.0 do
-                Citizen.Wait(5)
-                playerCoords = GetEntityCoords(playerPed)
-                distance = #(playerCoords - carWashBlip.pos)
+        for _, blip in pairs(carWashBlips) do
+            local distance = #(playerCoords - blip.pos)
 
+            if distance < 10.0 then
+                isInRangeAny = true
                 if distance < 4.0 then
+                    currentCarWash = blip
                     if isCarWashOpen() then
                         exports.ox_lib:showTextUI(_U('open_menu'), {
                             position = "right-center",
@@ -168,7 +175,7 @@ Citizen.CreateThread(function()
                             openCarWashMenu()
                         end
                     else
-                        exports.ox_lib:showTextUI(_U('closed'), {
+                        exports.ox_lib:showTextUI(_U('closed', Config.OpenHours.open, Config.OpenHours.close), {
                             position = "right-center",
                             icon = 'lock',
                             style = {
@@ -181,9 +188,13 @@ Citizen.CreateThread(function()
                     exports.ox_lib:hideTextUI()
                 end
             end
-        elseif distance >= 10.0 and isInRange then
-            isInRange = false
+        end
+
+        if not isInRangeAny then
+            currentCarWash = nil
             exports.ox_lib:hideTextUI()
         end
+
+        isInRange = isInRangeAny
     end
 end)
