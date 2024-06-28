@@ -8,8 +8,11 @@ local function getLatestRelease()
         if statusCode == 200 then
             local releaseInfo = json.decode(response)
             local latestVersion = releaseInfo.tag_name:match("^%s*(.-)%s*$")  -- Trim whitespace
-            print("\27[31mLatest release version: " .. latestVersion .. "\27[0m")
-            print("\27[32mCurrent server version: " .. currentVersion)
+            if currentVersion == latestVersion then
+                print("\27[32mYou are using the latest version!\27[0m")
+            else
+                print("\27[31mYour version is outdated. Please download the latest version.\27[0m")
+            end
             TriggerClientEvent('carwash:checkVersion', -1, currentVersion, latestVersion)
         else
             print("Failed to fetch release info. Status code: " .. statusCode)
