@@ -1,10 +1,18 @@
-> [!NOTE]
+> [!WARNING]
+> <b>Dependencies:</b>
 > - ESX
 > - <p>OX_LIB</p>
 
-
 > [!CAUTION]
 > - Tested on ESX: 1.10.7
+
+> [!TIP]
+> <b>Roadmap:</b>
+> - [X] Config
+> - [X] Localization
+> - [x] Opening Hours
+> - [ ] Water Effects
+
 
 ## SCREENSHOTS:
 ![image](https://github.com/inQer5/iQ-CarWash/assets/145898779/d732cd2d-7ccd-4fab-b634-f1d70439600a)
