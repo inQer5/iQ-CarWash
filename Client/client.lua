@@ -26,8 +26,8 @@ end
 loadLocale(Config.Locale)
 
 local carWashBlips = {}
-local isInRange = false
 local currentCarWash = nil
+local playerInRange = false
 
 local function isCarWashOpen()
     local hour = GetClockHours()
@@ -150,7 +150,7 @@ Citizen.CreateThread(function()
     createCarWashBlips()
 
     while true do
-        Citizen.Wait(5)
+        Citizen.Wait(500) -- zvýšení intervalu čekání pro optimalizaci obecné smyčky
         local playerPed = PlayerPedId()
         local playerCoords = GetEntityCoords(playerPed)
         local isInRangeAny = false
@@ -161,40 +161,56 @@ Citizen.CreateThread(function()
             if distance < 10.0 then
                 isInRangeAny = true
                 if distance < 4.0 then
-                    currentCarWash = blip
-                    if isCarWashOpen() then
-                        exports.ox_lib:showTextUI(_U('open_menu'), {
-                            position = "right-center",
-                            icon = 'hand',
-                            style = {
-                                borderRadius = 5,
-                                color = 'white'
-                            }
-                        })
-                        if IsControlJustReleased(0, 38) then
-                            openCarWashMenu()
-                        end
-                    else
-                        exports.ox_lib:showTextUI(_U('closed', Config.OpenHours.open, Config.OpenHours.close), {
-                            position = "right-center",
-                            icon = 'lock',
-                            style = {
-                                borderRadius = 5,
-                                color = 'red'
-                            }
-                        })
+                    if not playerInRange then
+                        currentCarWash = blip
+                        playerInRange = true
                     end
                 else
-                    exports.ox_lib:hideTextUI()
+                    if playerInRange and currentCarWash == blip then
+                        currentCarWash = nil
+                        playerInRange = false
+                        exports.ox_lib:hideTextUI()
+                    end
                 end
             end
         end
 
         if not isInRangeAny then
             currentCarWash = nil
+            playerInRange = false
             exports.ox_lib:hideTextUI()
         end
+    end
+end)
 
-        isInRange = isInRangeAny
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(5)
+        if playerInRange and currentCarWash then
+            if isCarWashOpen() then
+                exports.ox_lib:showTextUI(_U('open_menu'), {
+                    position = "right-center",
+                    icon = 'hand',
+                    style = {
+                        borderRadius = 5,
+                        color = 'white'
+                    }
+                })
+                if IsControlJustReleased(0, 38) then
+                    openCarWashMenu()
+                end
+            else
+                exports.ox_lib:showTextUI(_U('closed', Config.OpenHours.open, Config.OpenHours.close), {
+                    position = "right-center",
+                    icon = 'lock',
+                    style = {
+                        borderRadius = 5,
+                        color = 'red'
+                    }
+                })
+            end
+        else
+            Citizen.Wait(1000) -- pokud není hráč v dosahu, zpomalíme smyčku
+        end
     end
 end)
