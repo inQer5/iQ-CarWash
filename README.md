@@ -1,8 +1,5 @@
-ESX + OX_LIB 
-
-
 > [!NOTE]
-> Useful information that users should know, even when skimming content.
+> ESX + OX_LIB 
 
 > [!TIP]
 > Helpful advice for doing things better or more easily.
