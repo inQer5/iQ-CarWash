@@ -4,7 +4,7 @@
 
 
 > [!CAUTION]
-> - Tested ESX: 1.10.7
+> - Tested on ESX: 1.10.7
 
 ## SCREENSHOTS:
 ![image](https://github.com/inQer5/iQ-CarWash/assets/145898779/d732cd2d-7ccd-4fab-b634-f1d70439600a)
